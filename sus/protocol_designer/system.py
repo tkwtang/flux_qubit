@@ -180,8 +180,8 @@ class System:
             if resolution > 100:
                 print('using a lower resolution for searching a space in >3 dimensions')
 
-                if self.potential.N_dim > 4:
-                    resolution = 20
+                if self.potential.N_dim >= 4:
+                    resolution = 100
                 print('new resolution is {}'.format(resolution))
 
         NT = Nsample
@@ -211,7 +211,9 @@ class System:
             axes = [_ for _ in range(1, self.potential.N_dim + 1)]
         axes = np.array(axes) - 1
 
+        count = 0
         while i < Nsample:
+            count += 1
             test_coords = np.zeros((NT, self.potential.N_dim, 2))
             if slice_vals is not None:
                 test_state[:, :, 0] = slice_vals
@@ -232,7 +234,9 @@ class System:
 
             NT = max(int((Nsample-i)/ratio), 100)
 
+        print("from system: finish the while loop.")
         state = state[0:Nsample, :, :]
+        # print("the state is", state)
 
         if self.has_velocity:
             state[:, :, 1] = np.random.normal(0, np.sqrt(1/(self.mass*beta)), (Nsample, self.potential.N_dim))
@@ -688,6 +692,7 @@ class System:
 
         x_vec = np.transpose(np.linspace(*lims, resolution))
         X_mesh = np.meshgrid(*x_vec)
+
 
         if slice_values is None:
             slice_values = [0] * self.potential.N_dim

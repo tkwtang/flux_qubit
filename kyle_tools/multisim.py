@@ -23,8 +23,6 @@ class SimManager:
         if verbose:
             print('\n running sim...')
 
-        # print("the number of steps is", self.sim.nsteps)
-
         # return
         self.sim.output = self.sim.run(**kwargs)
         if verbose:

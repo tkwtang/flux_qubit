@@ -5,7 +5,7 @@ sys.path.append(source_path)
 sys.path.append(os.path.expanduser('~/Project/source/simtools/'))
 
 import numpy as np
-from .fq_potential import fq_pot, fq_default_param
+from .fq_potential import fq_pot, fq_default_param_dict
 from sus.protocol_designer import System, Protocol, Potential, Compound_Protocol
 from kyle_tools.multisim import SimManager, FillSpace
 from SimRunner import SaveParams, SaveSimOutput, SaveFinalWork
@@ -18,12 +18,18 @@ from quick_sim import setup_sim
 default_params_dict = {}
 
 class fluxQubitRunner(SimManager):
-    def __init__(self, name_func = [None, None], params = default_params_dict, potential_default_param = fq_default_param):
-        self.potential = fq_pot
+    def __init__(self, potetial = fq_pot, name_func = [None, None], params = default_params_dict, potential_default_param_dict = fq_default_param_dict, storage_protocol = None, computation_protocol = None ):
+        """
+        params: parameters for the simulation such as time, lambda, theta and eta
+        override_potential_parameter: to override the default parameter for the potential
+        """
+        self.potential = potetial
         self.params = params
         self.save_name = name_func
         self.has_velocity = True
-        self.override_potential = potential_default_param
+        self.override_potential_parameter = list(potential_default_param_dict.values())
+        self.storage_protocol = storage_protocol
+        self.computation_protocol = computation_protocol
 
         self.save_procs =  [SaveParams(), SaveSimOutput(), SaveFinalWork()]
 
@@ -31,11 +37,11 @@ class fluxQubitRunner(SimManager):
         return True
 
     def initialize_sim(self):
-        self.potential.default_params = self.override_potential
-        self.eq_protocol = self.potential.trivial_protocol().copy()
+        self.potential.default_params = self.override_potential_parameter
+        self.eq_protocol = self.storage_protocol or  self.potential.trivial_protocol().copy()
 
-        self.potential.default_params = np.array(self.override_potential)
-        self.protocol = self.potential.trivial_protocol().copy()
+        self.potential.default_params = np.array(self.override_potential_parameter)
+        self.protocol = self.computation_protocol or self.potential.trivial_protocol().copy()
         print(f"from fq_runner.py: system.protocol.t_i = {self.protocol.t_i}, system.protocol.t_f = {self.protocol.t_f}")
 
         self.eq_system = System(self.eq_protocol, self.potential)

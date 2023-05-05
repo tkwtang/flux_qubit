@@ -50,7 +50,7 @@ def animate_sim_flux_qubit(all_state, times=[0,1], system=None, frame_skip=30, w
         fig, ax = plt.subplots()
     else:
         fig, ax = fig_ax
-
+    plt.close()
     samples = np.linspace(0, nsteps-1, nsteps)[::frame_skip]
     time = np.linspace(times[0], times[1], nsteps + 1)
     opacity = min(1, 300/N)
@@ -72,6 +72,10 @@ def animate_sim_flux_qubit(all_state, times=[0,1], system=None, frame_skip=30, w
     fig.legend(state_lookup)
 
     ax.set(xlim=x_lim, ylim=y_lim, xlabel=names[0], ylabel=names[1])
+
+    # if system is not None:
+    #     pot, pout = system.show_potential(times[0], ax=ax, cbar=False, surface=False, **pot_kwargs)
+    #     pot.title.set_visible(False)
 
     def animate(i):
         index = int(samples[i])

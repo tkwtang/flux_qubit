@@ -59,6 +59,7 @@ class BitFlipRunner(SimManager):
         self.eq_system.has_velocity= self.has_velocity
         self.system.protocol.normalize()
         self.system.protocol.time_stretch(np.pi/np.sqrt(k))
+        print("from SimRunner.py, set_sim_attributes")
         self.set_sim_attributes()
 
         return
@@ -78,7 +79,7 @@ class BitFlipRunner(SimManager):
         print("The dt is", self.params['dt'],)
 
         # edward added this, to override the 200 states only in all states.
-        self.procs[2] = sp.MeasureAllState()
+        # self.procs[2] = sp.MeasurexAllState()
 
 
         # orignial
@@ -111,9 +112,9 @@ class BitFlipRunner(SimManager):
     def set_simprocs(self, as_step):
         return [
             sp.ReturnFinalState(),
-            sp.TerminateOnMean(rp.get_time_constant_work, target=self.params['target_work'], step_request=np.s_[::as_step], output_name='all_W'),
-            sp.MeasureAllState(trial_request=np.s_[:200], step_request=np.s_[::as_step]),
-            tp.CountJumps(output_name='jump_trajectories', state_slice=np.s_[...,0]),
+            # sp.TerminateOnMean(rp.get_time_constant_work, target=self.params['target_work'], step_request=np.s_[::as_step], output_name='all_W'),
+            # sp.MeasureAllState(trial_request=np.s_[:200], step_request=np.s_[::as_step]),
+            # tp.CountJumps(output_name='jump_trajectories', state_slice=np.s_[...,0]),
             ]
 
 class FredkinRunner(BitFlipRunner):

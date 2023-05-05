@@ -41,8 +41,7 @@ def setup_sim(system, init_state, procedures=None, sim_params=None, dt=1/200, da
 
         omega = sim_params[0]
         xi = sim_params[1] * sqrt(temp) * sqrt(damping)
-        dynamic = langevin_overdamped.LangevinOverdamped(omega, xi,
-                                                         system.get_external_force)
+        dynamic = langevin_overdamped.LangevinOverdamped(omega, xi, system.get_external_force)
 
     dynamic.mass = system.mass
     integrator = rkdeterm_eulerstoch.RKDetermEulerStoch(dynamic)
