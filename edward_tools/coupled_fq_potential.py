@@ -74,11 +74,11 @@ def coupled_flux_qubit_pot(phi_1, phi_2, phi_1dc, phi_2dc, params, phi_1_prefact
 
     U = U0_1 * ( u1_1 + u2_1 + u3_1 + u4_1 ) + U0_2 * ( u1_2 + u2_2 + u3_2 + u4_2 ) + u5
 
-    print("From coupled_fq_potential.py")
-    print("This is phi_1:", phi_1)
-    print("This is phi_2:", phi_2)
-    print("This is phi_1dc:", phi_1dc)
-    print("This is phi_2dc:", phi_2dc)
+    # print("From coupled_fq_potential.py")
+    # print("This is phi_1:", phi_1)
+    # print("This is phi_2:", phi_2)
+    # print("This is phi_1dc:", phi_1dc)
+    # print("This is phi_2dc:", phi_2dc)
 
     return U
 

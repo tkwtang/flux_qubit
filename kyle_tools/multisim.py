@@ -11,14 +11,15 @@ class SimManager:
     def analyze_output(self):
         pass
 
-    def run_sim(self, verbose=True, **kwargs):
+    # updated by edward: added the initial state in run sim to override the generation of the initial state each time the simulation is run
+    def run_sim(self, verbose=True, init_state = None,  manual_domain = None, axes = None, **kwargs):
 
         self.save_dict={}
         self.save_dict['start_date'] = datetime.datetime.now()
         if verbose:
             print('\n initializing...')
         self.initialize_sim()
-        self.set_sim_attributes()
+        self.set_sim_attributes(init_state = init_state, manual_domain = manual_domain, axes = axes)
 
         if verbose:
             print('\n running sim...')

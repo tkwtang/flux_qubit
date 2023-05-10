@@ -102,38 +102,176 @@ def create_system_from_storage_and_computation_protocol(storage_protocol_paramet
 
     return storage_protocol, comp_protocol
 
+def customizedProtocol(initial_values_dict, protocol_list, normalized = False):
+    protocol_key_array = ['U0_1', 'U0_2', 'gamma_1', 'gamma_2', 'beta_1', 'beta_2', 'd_beta_1', \
+                    'd_beta_2', 'phi_1_x', 'phi_2_x', 'phi_1_dcx', 'phi_2_dcx', 'M_12']
 
-def get_potential_shot_at_different_t(simRunner, timeSeries, axis1 = 0, axis2 = 1, contours=10, resolution = 200, manual_domain=None, surface = False, cbar=False):
+    protocol_parameter_dict = {key: [value] for key, value in initial_values_dict.items()}
+    protocol_parameter_dict["t"] = [0]
 
-    numberOfColumns = 4
 
+    for item in protocol_list:
+        # add the duration to the time entry of the protocol_parameter_dict
+        protocol_parameter_dict["t"].append(protocol_parameter_dict["t"][-1] + item["duration"])
+
+        for key in protocol_key_array:
+            if key in item.keys(): # to check which key is present in the protocol_list_item.
+                protocol_parameter_dict[key].append(item[key])
+            else:
+                protocol_parameter_dict[key].append(protocol_parameter_dict[key][-1])
+
+    if normalized:
+        protocol_parameter_dict["t"] = np.array(protocol_parameter_dict["t"])/ np.max(protocol_parameter_dict["t"])
+
+    return protocol_parameter_dict
+
+def get_potential_shot_at_different_t(simRunner, protocol_parameter_dict, timeStep = None, axis1 = 0, axis2 = 1, contours=10, resolution = 200, manual_domain=None, slice_values = None, surface = False, cbar=False, numberOfColumns = 3, vmin = None, vmax = None):
+    # print(protocol_parameter_dict)
+    # to figure out which parameter has changed, and which have not been changed.
+    changing_parameter_key = [key for key, value in protocol_parameter_dict.items() \
+                            if len(set(value)) != 1]
+
+    # to create the title of each subplot
+
+    if timeStep:
+        timeSeries = np.arange(protocol_parameter_dict["t"][0], protocol_parameter_dict["t"][-1] + timeStep, timeStep)
+        # timeSeries = np.arange(0, 1 + timeStep, timeStep)
+        changing_parameter_dict = {}
+
+
+        for key in changing_parameter_key:
+            if key != "t":
+                keyIndex = protocol_key.index(key)
+                changing_parameter_dict[key] = [simRunner.system.protocol.get_params(t)[keyIndex] for t in timeSeries]
+
+    else:
+        timeSeries = protocol_parameter_dict["t"]
+        changing_parameter_dict = {key: protocol_parameter_dict[key] for key in changing_parameter_key}
+
+    print(changing_parameter_dict)
+    # create the subplot_title
+    subplot_title_array = []
+    for key, value in changing_parameter_dict.items():
+        array = [f"{key}: {v:.3g}" for v in value]
+        subplot_title_array.append(array)
+    subplot_title_array = list(zip(*subplot_title_array))
+
+    # to create the subgraph with correct number of rows
     numberOfPlots = len(timeSeries)
     offset = 0 if numberOfPlots % numberOfColumns == 0 else 1
     numberOfRows = numberOfPlots // numberOfColumns + offset
 
-    if surface is False:
-        fig, ax = plt.subplots(numberOfRows, numberOfColumns, figsize=(18,4 * numberOfRows))
-        fig.tight_layout(h_pad=5, w_pad=2)
-    else:
-        fig = plt.figure(figsize=plt.figaspect(0.5))
+    fig, ax = plt.subplots(numberOfRows, numberOfColumns, figsize=(18,4 * numberOfRows))
 
-    for i, t in enumerate(timeSeries):
-        row = i // numberOfColumns
-        column = i % numberOfColumns
-        U, X_mesh = simRunner.system.lattice(t, resolution, axes=(axis1, axis2), manual_domain=manual_domain)
-        X = X_mesh[0]
-        Y = X_mesh[1]
-        x_min, x_max = np.min(X), np.max(X)
-        y_min, y_max = np.min(Y), np.max(Y)
-        if surface is False:
-            out = ax[row][column].contourf(X, Y, U, contours)
-            if cbar:
-                plt.colorbar(out)
-            ax[row][column].set_title("t={:.2f}".format(t))
 
-        if surface is True:
+    def drawParameterGraphs(fig, ax, vmin, vmax):
+        # vmin, vmax = 0, 0
+        modified_manual_domain = [(manual_domain[0][1], manual_domain[0][0]), (manual_domain[1][1], manual_domain[1][0])]
+        for i, t in enumerate(timeSeries):
+            row = i // numberOfColumns
+            column = i % numberOfColumns
+            U, X_mesh = simRunner.system.lattice(t, resolution, axes=(0, 1), manual_domain=modified_manual_domain, slice_values = slice_values)
 
-            ax = fig.add_subplot(row+1, numberOfColumns, column + 1, projection='3d')
-            surf = ax.plot_surface(X, Y, U)
-            ax.set_title("t={:.2f}".format(t))
+            if (i==0) and not vmin and not vmax:
+                vmin = np.min(U)
+                vmax = np.max(U)
+            # U, X_mesh = simRunner.system.lattice(t, resolution, axes=(axis1, axis2), manual_domain=manual_domain, slice_values = slice_values)
+            X = X_mesh[0]
+            Y = X_mesh[1]
+            x_min, x_max = np.min(X), np.max(X)
+            y_min, y_max = np.min(Y), np.max(Y)
+
+            if surface is False:
+                # subplot = fig.add_subplot(row+1, numberOfColumns, column + 1)
+                # out = subplot.contourf(X, Y, U, contours)
+                if cbar:
+                    plt.colorbar(out)
+
+                # This part is to prevent index error
+                if len(timeSeries) > numberOfColumns: # when the number of graph is more than one row
+                    subplot = ax[row][column]
+                elif len(timeSeries) <= numberOfColumns and len(timeSeries) > 1: # when the number of graph is just one row
+                    subplot = ax[column]
+                elif len(timeSeries) == 1: # when the number of graph is 1
+                    subplot = ax
+                subplot.set_aspect(1)
+                print(timeSeries)
+                if len(subplot_title_array) > 0:
+                    subplot.set_title(f"t = {t:.3g}, " + ", ".join(subplot_title_array[i]))
+                else:
+                    subplot.set_title(f"t = {t:.3g}")
+                out = subplot.contourf(X, Y, U, contours, vmin = vmin, vmax = vmax)
+
+                # cfqr.system.protocol.get_params(0)
+            if surface is True:
+
+                ax = fig.add_subplot(row+1, numberOfColumns, column + 1, projection='3d')
+                surf = ax.plot_surface(X, Y, U)
+                # ax.set_title(", ".join(subplot_title_array[i]))
+
+    drawParameterGraphs(fig, ax, vmin, vmax)
     plt.show()
+
+
+def eq_state(self, Nsample, t=None, resolution=500, beta=1, manual_domain=None, axes=None, slice_vals=None, verbose=True):
+        resolution = 80
+        NT = Nsample
+        state = np.zeros((max(100, int(2*NT)), self.potential.N_dim, 2))
+
+        def get_prob(self, state):
+            E_curr = self.get_energy(state, t)
+            Delta_U = E_curr-U0
+            return np.exp(-beta * Delta_U)
+
+        if t is None:
+            t = self.protocol.t_i
+
+        U, X = self.lattice(t, resolution, axes=axes, slice_values=slice_vals, manual_domain=manual_domain)
+
+        print(U, X)
+        mins = []
+        maxes = []
+        # for item in X:
+        #     mins.append(np.min(item))
+        #     maxes.append(np.max(item))
+        #
+        # U0 = np.min(U)
+        # i = 0
+
+#         if axes is None:
+#             axes = [_ for _ in range(1, self.potential.N_dim + 1)]
+#         axes = np.array(axes) - 1
+
+#         count = 0
+#         while i < Nsample:
+#             count += 1
+#             test_coords = np.zeros((NT, self.potential.N_dim, 2))
+#             if slice_vals is not None:
+#                 test_state[:, :, 0] = slice_vals
+
+#             test_coords[:, axes, 0] = np.random.uniform(mins, maxes, (NT, len(axes)))
+
+#             p = get_prob(self, test_coords)
+
+#             decide = np.random.uniform(0, 1, NT)
+#             n_sucesses = np.sum(p > decide)
+#             if i == 0:
+#                 ratio = max(n_sucesses/NT, .05)
+
+#             state[i:i+n_sucesses, :, :] = test_coords[p > decide, :, :]
+#             i = i + n_sucesses
+#             if verbose:
+#                 print("\r found {} samples out of {}".format(i, Nsample), end="")
+
+#             NT = max(int((Nsample-i)/ratio), 100)
+
+#         print("from system: finish the while loop.")
+#         state = state[0:Nsample, :, :]
+#         # print("the state is", state)
+
+#         if self.has_velocity:
+#             state[:, :, 1] = np.random.normal(0, np.sqrt(1/(self.mass*beta)), (Nsample, self.potential.N_dim))
+#         else:
+#             return state[:, :, 0]
+
+#         return state

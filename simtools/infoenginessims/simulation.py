@@ -197,8 +197,8 @@ class Simulation:
         # self.current_step = 0
         # while self.current_step < nsteps:
         for step in range(nsteps):
-            if (step > nsteps - 100):
-                print(step, nsteps)
+            if (step > nsteps - 10):
+                print("From simulation.py", step, nsteps)
             time = step * dt
 
             self.current_step = step

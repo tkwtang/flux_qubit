@@ -30,8 +30,8 @@ class coupledFluxQubitRunner(SimManager):
         self.override_potential_parameter = potential_default_param
         self.storage_protocol = storage_protocol
         self.computation_protocol = computation_protocol
-
         self.save_procs =  [SaveParams(), SaveSimOutput(), SaveFinalWork()]
+
 
     def verify_param(self, key, val):
         return True
@@ -42,30 +42,38 @@ class coupledFluxQubitRunner(SimManager):
 
         self.potential.default_params = np.array(self.override_potential_parameter)
         self.protocol = self.computation_protocol or self.potential.trivial_protocol().copy()
-        print(f"from fq_runner.py: system.protocol.t_i = {self.protocol.t_i}, system.protocol.t_f = {self.protocol.t_f}")
+        # print(f"from fq_runner.py: system.protocol.t_i = {self.protocol.t_i}, system.protocol.t_f = {self.protocol.t_f}")
 
         self.eq_system = System(self.eq_protocol, self.potential)
+        self.eq_system.axes_label = ["phi_1", "phi_2", "phi_1_dc", "phi_2_dc"]
         self.eq_system.has_velocity = self.has_velocity
 
         self.system = System(self.protocol, self.potential)
+        self.system.axes_label = ["phi_1", "phi_2", "phi_1_dc", "phi_2_dc"]
         self.system.has_velocity = self.has_velocity
 
-        self.system.protocol.normalize()
+
+        # self.system.protocol.normalize()
         # self.system.protocol.time_stretch(np.pi/np.sqrt(1))
 
 
-    def set_sim_attributes(self):
-        self.init_state = self.eq_system.eq_state(self.params['N'], t=0, beta=self.params['beta'])
+    def set_sim_attributes(self, init_state = None, manual_domain = None, axes = None):
+        if init_state is not None:
+            print("use old initial_state")
+            self.init_state = init_state
+        else:
+            print("generating new initial_state")
+            self.init_state = self.eq_system.eq_state(self.params['N'], t=0, beta=self.params['beta'], manual_domain = manual_domain, axes = axes)
 
         as_step = max(1, int((self.system.protocol.t_f/self.params['dt'])/500))
 
         self.procs = self.set_simprocs(as_step)
 
-        print("The as_tep is", as_step)
-        print("The dt is", self.params['dt'],)
+        print("from cfq_runner.py, The as_tep is", as_step)
+        print("from cfq_runner.py, The dt is", self.params['dt'],)
 
         # edward added this, to override the 200 states only in all states.
-        # self.procs[2] = sp.MeasureAllState()
+        # self.procs[1] = sp.MeasureAllState()
 
         sim_kwargs = {
                         'damping':self.params['lambda'],

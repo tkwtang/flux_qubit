@@ -181,7 +181,7 @@ class System:
                 print('using a lower resolution for searching a space in >3 dimensions')
 
                 if self.potential.N_dim >= 4:
-                    resolution = 100
+                    resolution = 50
                 print('new resolution is {}'.format(resolution))
 
         NT = Nsample
@@ -423,7 +423,8 @@ class System:
         axis1=1,
         axis2=2,
         slice_values=None,
-        show_force=False
+        show_force=False,
+        aspectRatio = None
     ):
         """
         Shows an animation of how the potential changes over the duration of your protocol, can be a little slow
@@ -580,6 +581,9 @@ class System:
                 fig, ax = plt.subplots(1, 1)
                 ax.set_xlabel("x{}".format(axis1))
                 ax.set_ylabel("x{}".format(axis2))
+
+                if aspectRatio:
+                    ax.set_aspect(aspectRatio)
                 # cont = plt.contour(X,Y,U_array[:,:,0],50)
                 # ax.xaxis.tick_top()
                 # ax.invert_yaxis()
@@ -679,16 +683,16 @@ class System:
                 lims = self.potential.domain
 
                 if axes is None:
-                    axes = [_ for _ in range(1, self.potential.N_dim+1)]
+                    axes = [_ for _ in range(0, self.potential.N_dim)]
 
-                axes = np.array(axes) - 1
+                axes = np.array(axes)
                 lims = lims[:, axes]
 
             else:
                 assert axes is not None, "when using a manual domain, must include the 'axes' keyword argument"
                 manual_domain = np.array(manual_domain)
-                axes = np.array(axes) - 1
-                lims = manual_domain[:, axes]
+                axes = np.array(axes)
+                lims = manual_domain[:, axes-1]
 
         x_vec = np.transpose(np.linspace(*lims, resolution))
         X_mesh = np.meshgrid(*x_vec)
