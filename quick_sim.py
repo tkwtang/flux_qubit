@@ -18,9 +18,7 @@ from simprocedures import running_measurements as rp
 from simulation import Simulation
 
 
-def setup_sim(system, init_state, procedures=None, sim_params=None, dt=1/200, damping=1, temp=1, extra_time=1):
-    print("from quick_sim.py")
-    print(sim_params)
+def setup_sim(system, init_state, procedures=None, sim_params=None, dt=1/200, damping=1, temp=1, extra_time=1, verbose = True):
     if system.has_velocity:
         if sim_params is None:
             sim_params=[1.,1.,1.]
@@ -29,8 +27,9 @@ def setup_sim(system, init_state, procedures=None, sim_params=None, dt=1/200, da
         theta = sim_params[1]
         eta = sim_params[2] * sqrt(damping) * sqrt(temp)
 
-        print("from quick_sim.py")
-        print(f"gamma: {gamma}, theta: {theta} and eta: {eta}")
+        if verbose:
+            print("from quick_sim.py")
+            print(f"gamma: {gamma}, theta: {theta} and eta: {eta}")
 
         dynamic = langevin_underdamped.LangevinUnderdamped(theta, gamma, eta,
                                                            system.get_external_force)

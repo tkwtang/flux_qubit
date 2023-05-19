@@ -12,14 +12,15 @@ class SimManager:
         pass
 
     # updated by edward: added the initial state in run sim to override the generation of the initial state each time the simulation is run
-    def run_sim(self, verbose=True, init_state = None,  manual_domain = None, axes = None, **kwargs):
+    def run_sim(self, verbose=True, init_state = None,  manual_domain = None, axes = None, percentage = 0.1, **kwargs):
+        # percentage is a keyword for the percentage of sample data will be used
 
         self.save_dict={}
         self.save_dict['start_date'] = datetime.datetime.now()
         if verbose:
             print('\n initializing...')
         self.initialize_sim()
-        self.set_sim_attributes(init_state = init_state, manual_domain = manual_domain, axes = axes)
+        self.set_sim_attributes(init_state = init_state, manual_domain = manual_domain, axes = axes, percentage = percentage)
 
         if verbose:
             print('\n running sim...')

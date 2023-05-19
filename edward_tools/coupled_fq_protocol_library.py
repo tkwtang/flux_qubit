@@ -125,6 +125,12 @@ def customizedProtocol(initial_values_dict, protocol_list, normalized = False):
 
     return protocol_parameter_dict
 
+
+# def sliceThroughPhi_dc(simRunner, time = None, axis1 = 0, axis2 = 1, contours=10, resolution = 200, manual_domain=None, slice_values = None, surface = False, cbar=False, numberOfColumns = 3, vmin = None, vmax = None, steps = None):
+#
+
+
+
 def get_potential_shot_at_different_t(simRunner, protocol_parameter_dict, timeStep = None, axis1 = 0, axis2 = 1, contours=10, resolution = 200, manual_domain=None, slice_values = None, surface = False, cbar=False, numberOfColumns = 3, vmin = None, vmax = None):
     # print(protocol_parameter_dict)
     # to figure out which parameter has changed, and which have not been changed.
@@ -148,7 +154,7 @@ def get_potential_shot_at_different_t(simRunner, protocol_parameter_dict, timeSt
         timeSeries = protocol_parameter_dict["t"]
         changing_parameter_dict = {key: protocol_parameter_dict[key] for key in changing_parameter_key}
 
-    print(changing_parameter_dict)
+    # print(changing_parameter_dict)
     # create the subplot_title
     subplot_title_array = []
     for key, value in changing_parameter_dict.items():
@@ -170,6 +176,12 @@ def get_potential_shot_at_different_t(simRunner, protocol_parameter_dict, timeSt
         for i, t in enumerate(timeSeries):
             row = i // numberOfColumns
             column = i % numberOfColumns
+            phi_1_dcx_index = protocol_key.index('phi_1_dcx')
+            phi_2_dcx_index = protocol_key.index('phi_2_dcx')
+            phi_1_dc_i = simRunner.system.protocol.get_params(t)[phi_1_dcx_index]
+            phi_2_dc_i = simRunner.system.protocol.get_params(t)[phi_2_dcx_index]
+            slice_values = [0, 0, phi_1_dc_i, phi_2_dc_i]
+
             U, X_mesh = simRunner.system.lattice(t, resolution, axes=(0, 1), manual_domain=modified_manual_domain, slice_values = slice_values)
 
             if (i==0) and not vmin and not vmax:
@@ -195,7 +207,7 @@ def get_potential_shot_at_different_t(simRunner, protocol_parameter_dict, timeSt
                 elif len(timeSeries) == 1: # when the number of graph is 1
                     subplot = ax
                 subplot.set_aspect(1)
-                print(timeSeries)
+
                 if len(subplot_title_array) > 0:
                     subplot.set_title(f"t = {t:.3g}, " + ", ".join(subplot_title_array[i]))
                 else:
@@ -228,7 +240,6 @@ def eq_state(self, Nsample, t=None, resolution=500, beta=1, manual_domain=None, 
 
         U, X = self.lattice(t, resolution, axes=axes, slice_values=slice_vals, manual_domain=manual_domain)
 
-        print(U, X)
         mins = []
         maxes = []
         # for item in X:

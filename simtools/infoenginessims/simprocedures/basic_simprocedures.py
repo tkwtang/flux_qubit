@@ -1,5 +1,7 @@
 from numpy import empty, s_, histogramdd, mean, shape, array, average, sign
 from scipy.stats import sem
+import numpy as np
+# import numpy as np
 
 
 class SimProcedure:
@@ -277,3 +279,32 @@ class MeasureAllStateDists(SimProcedure):
     def do_final_task(self):
 
         return self.all_dists
+
+
+class MeasureWorkDone(SimProcedure):
+    """Written by Edward. Records the wor done for the whole step."""
+
+    def __init__(self, output_name='work_done', step_request=s_[:], trial_request = s_[:]):
+
+        # self.get_dvalue = get_dvalue
+        self.output_name = output_name
+        self.step_request = step_request
+        self.trial_request = trial_request
+
+
+    def do_initial_task(self, simulation):
+        self.simulation = simulation
+        simulation.work_dist_array = empty(simulation.ntrials)
+        simulation.work_statistic_array = empty([simulation.nsteps, 2])
+
+    def do_intermediate_task(self):
+        simulation = self.simulation
+        current_time = simulation.current_time
+        current_step = simulation.current_step
+        next_time = simulation.dt + simulation.current_time
+        next_state = simulation.next_state
+        simulation.work_dist_array += simulation.system.get_potential(next_state, next_time) - simulation.system.get_potential(next_state, current_time)
+
+        simulation.work_statistic_array[current_step, :] = [np.mean(simulation.work_dist_array), np.std(simulation.work_dist_array)]
+
+        # simulation.work_statistic_array[current_step] =

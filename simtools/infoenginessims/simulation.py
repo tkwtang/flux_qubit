@@ -132,8 +132,7 @@ class Simulation:
         Providing both leaves initial_dist without any particular function.
         If only initial_dist is provided, should also provide ntrials.
         """
-        print("This line is for the initializatoin of the simulation object.")
-        print(f"number of steps: {nsteps}, dt: {dt}")
+        print(f"from simulation.py: number of steps: {nsteps}, dt: {dt}")
 
         if initial_state is not None:
 
@@ -197,8 +196,7 @@ class Simulation:
         # self.current_step = 0
         # while self.current_step < nsteps:
         for step in range(nsteps):
-            if (step > nsteps - 10):
-                print("From simulation.py", step, nsteps)
+            print(f"simulating step {step}", end="\r")
             time = step * dt
 
             self.current_step = step

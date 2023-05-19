@@ -12,7 +12,7 @@ from SimRunner import SaveParams, SaveSimOutput, SaveFinalWork
 from infoenginessims.simprocedures import basic_simprocedures as sp
 from infoenginessims.simprocedures import running_measurements as rp
 from infoenginessims.simprocedures import trajectory_measurements as tp
-from infoenginessims.simprocedures.basic_simprocedures import ReturnFinalState
+from infoenginessims.simprocedures.basic_simprocedures import ReturnFinalState, MeasureWorkDone
 from quick_sim import setup_sim
 
 default_params_dict = {}
@@ -57,7 +57,7 @@ class coupledFluxQubitRunner(SimManager):
         # self.system.protocol.time_stretch(np.pi/np.sqrt(1))
 
 
-    def set_sim_attributes(self, init_state = None, manual_domain = None, axes = None):
+    def set_sim_attributes(self, init_state = None, manual_domain = None, axes = None, percentage = 0.1, verbose = True):
         if init_state is not None:
             print("use old initial_state")
             self.init_state = init_state
@@ -67,10 +67,13 @@ class coupledFluxQubitRunner(SimManager):
 
         as_step = max(1, int((self.system.protocol.t_f/self.params['dt'])/500))
 
-        self.procs = self.set_simprocs(as_step)
+        sampleSize = round(self.params['N'] * percentage)
 
-        print("from cfq_runner.py, The as_tep is", as_step)
-        print("from cfq_runner.py, The dt is", self.params['dt'],)
+        self.procs = self.set_simprocs(as_step, sampleSize)
+
+        if verbose:
+            print("from cfq_runner.py, The as_tep is", as_step)
+            print("from cfq_runner.py, The dt is", self.params['dt'],)
 
         # edward added this, to override the 200 states only in all states.
         # self.procs[1] = sp.MeasureAllState()
@@ -83,22 +86,23 @@ class coupledFluxQubitRunner(SimManager):
                         'sim_params': self.params['sim_params']
             }
 
-        self.sim = setup_sim(self.system, self.init_state, **sim_kwargs)
+        self.sim = setup_sim(self.system, self.init_state, verbose = verbose,**sim_kwargs)
         self.sim.reference_system = self.eq_system
         return
 
-    def analyze_output(self):
-        if not hasattr(self.sim.output, 'final_W'):
-            final_state = self.sim.output.final_state
-            init_state = self.sim.initial_state
-            U0 = self.system.get_potential(init_state, 0) - self.eq_system.get_potential(init_state, 0)
-            UF = self.eq_system.get_potential(final_state, 0) - self.system.get_potential(final_state, 0)
-            final_W = U0 + UF
-            setattr(self.sim.output, 'final_W', final_W)
+    # def analyze_output(self):
+    #     if not hasattr(self.sim.output, 'final_W'):
+    #         final_state = self.sim.output.final_state
+    #         init_state = self.sim.initial_state
+    #         U0 = self.system.get_potential(init_state, 0) - self.eq_system.get_potential(init_state, 0)
+    #         UF = self.eq_system.get_potential(final_state, 0) - self.system.get_potential(final_state, 0)
+    #         final_W = U0 + UF
+    #         setattr(self.sim.output, 'final_W', final_W)
 
 
-    def set_simprocs(self, as_step):
+    def set_simprocs(self, as_step, sampleSize):
         return [
             sp.ReturnFinalState(),
-            sp.MeasureAllState(trial_request=np.s_[:200], step_request=np.s_[::as_step])
+            sp.MeasureAllState(trial_request=np.s_[:sampleSize], step_request=np.s_[::as_step]),
+            sp.MeasureWorkDone(trial_request=np.s_[:sampleSize], step_request=np.s_[::as_step])
             ]
