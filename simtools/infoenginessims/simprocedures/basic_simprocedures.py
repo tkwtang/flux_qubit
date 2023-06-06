@@ -1,4 +1,4 @@
-from numpy import empty, s_, histogramdd, mean, shape, array, average, sign
+from numpy import empty, s_, histogramdd, mean, shape, array, average, sign, zeros
 from scipy.stats import sem
 import numpy as np
 # import numpy as np
@@ -294,7 +294,9 @@ class MeasureWorkDone(SimProcedure):
 
     def do_initial_task(self, simulation):
         self.simulation = simulation
-        simulation.work_dist_array = empty(simulation.ntrials)
+        # ntrial =  simResult["cfqr"].sim.initial_state.shape[0]
+        simulation.work_dist_array = zeros(simulation.ntrials)
+        simulation.work_dist_array_new = zeros(simulation.ntrials)
         simulation.work_statistic_array = empty([simulation.nsteps, 2])
 
     def do_intermediate_task(self):
@@ -302,9 +304,48 @@ class MeasureWorkDone(SimProcedure):
         current_time = simulation.current_time
         current_step = simulation.current_step
         next_time = simulation.dt + simulation.current_time
+        current_state = simulation.current_state
         next_state = simulation.next_state
+
+
+        # print("from basic_simprocedures, imtermidate step:", current_time, current_step)
+
         simulation.work_dist_array += simulation.system.get_potential(next_state, next_time) - simulation.system.get_potential(next_state, current_time)
 
+        simulation.work_dist_array_new += simulation.system.get_potential(current_state, next_time) - simulation.system.get_potential(current_state, current_time)
+
         simulation.work_statistic_array[current_step, :] = [np.mean(simulation.work_dist_array), np.std(simulation.work_dist_array)]
+
+    def do_final_task(self):
+        simulation = self.simulation
+        current_time = simulation.current_time
+        current_step = simulation.current_step
+        # next_time = simulation.dt + simulation.current_time
+        current_state = simulation.current_state
+        next_state = simulation.next_state
+        print("final_step")
+        print("from basic_simprocedures:", current_time, current_step)
+        # simulation.work_dist_array_new += simulation.system.get_potential(current_state, next_time)
+
+class MeasureWorkDone2(SimProcedure):
+    """Written by Edward. Update using the method written by Kyle."""
+
+    def __init__(self, get_dW, output_name='work_done_2', step_request=s_[:], trial_request = s_[:]):
+
+        # self.get_dvalue = get_dvalue
+        self.output_name = output_name
+        self.step_request = step_request
+        self.trial_request = trial_request
+        self.get_val = get_dW
+
+
+    def do_initial_task(self, simulation):
+        self.simulation = simulation
+        # ntrial =  simResult["cfqr"].sim.initial_state.shape[0]
+        self.simulation.work_dist_array_2 = zeros(simulation.ntrials)
+
+    def do_intermediate_task(self):
+        dW = self.get_val(self.simulation)
+        self.simulation.work_dist_array_2 += dW
 
         # simulation.work_statistic_array[current_step] =

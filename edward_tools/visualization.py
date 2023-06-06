@@ -143,6 +143,7 @@ def animate_sim_flux_qubit(all_state, times=[0,1], system=None, frame_skip=30, w
         txt.set_text(f't={t_c:.2g} {getProtocolSubstepName(system.protocol_list, t_c)}')
 
         if system:
+            system.state_lookup  = state_lookup
             modified_manual_domain = [(manual_domain[0][1], manual_domain[0][0]), (manual_domain[1][1], manual_domain[1][0])]
             # print(modified_manual_domain)
             U, X_mesh = system.lattice(t_c, 80, axes=(0, 1), manual_domain=modified_manual_domain, slice_values = slice_values)

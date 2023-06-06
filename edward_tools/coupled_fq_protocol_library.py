@@ -225,6 +225,153 @@ def get_potential_shot_at_different_t(simRunner, protocol_parameter_dict, timeSt
     plt.show()
 
 
+def get_potential_shot_at_different_t_1D(simRunner, protocol_parameter_dict, timeStep = None, axis1 = 0, axis2 = 1, targetAxis = 0, cutlineDirection = "v", cutlineValue = 0, contours=10, resolution = 200, manual_domain=None, slice_values = None, surface = False, cbar=False, numberOfColumns = 3, vmin = None, vmax = None):
+    # print(protocol_parameter_dict)
+    # to figure out which parameter has changed, and which have not been changed.
+    changing_parameter_key = [key for key, value in protocol_parameter_dict.items() \
+                            if len(set(value)) != 1]
+
+    # to create the title of each subplot
+    plotResultArray = []
+
+    if timeStep:
+        timeSeries = np.arange(protocol_parameter_dict["t"][0], protocol_parameter_dict["t"][-1] + timeStep, timeStep)
+        # timeSeries = np.arange(0, 1 + timeStep, timeStep)
+        changing_parameter_dict = {}
+
+
+        for key in changing_parameter_key:
+            if key != "t":
+                keyIndex = protocol_key.index(key)
+                changing_parameter_dict[key] = [simRunner.system.protocol.get_params(t)[keyIndex] for t in timeSeries]
+
+    else:
+        timeSeries = protocol_parameter_dict["t"]
+        changing_parameter_dict = {key: protocol_parameter_dict[key] for key in changing_parameter_key}
+
+    # print(changing_parameter_dict)
+    # create the subplot_title
+    subplot_title_array = []
+    for key, value in changing_parameter_dict.items():
+        array = [f"{key}: {v:.3g}" for v in value]
+        subplot_title_array.append(array)
+    subplot_title_array = list(zip(*subplot_title_array))
+
+    # to create the subgraph with correct number of rows
+    numberOfPlots = len(timeSeries * 2)
+    offset = 0 if numberOfPlots % numberOfColumns == 0 else 2
+    numberOfRows = numberOfPlots // numberOfColumns + offset
+
+    fig, ax = plt.subplots(numberOfRows, numberOfColumns, figsize=(18,4 * numberOfRows))
+
+
+    def drawParameterGraphs(fig, ax, vmin, vmax):
+        # vmin, vmax = 0, 0
+        modified_manual_domain = [(manual_domain[0][1], manual_domain[0][0]), (manual_domain[1][1], manual_domain[1][0])]
+
+        for i, t in enumerate(timeSeries):
+            contour_row = 2 * (i // numberOfColumns)
+            cutline_row = contour_row + 1
+            column = i % numberOfColumns
+            phi_1_dcx_index = protocol_key.index('phi_1_dcx')
+            phi_2_dcx_index = protocol_key.index('phi_2_dcx')
+            phi_1_dc_i = simRunner.system.protocol.get_params(t)[phi_1_dcx_index]
+            phi_2_dc_i = simRunner.system.protocol.get_params(t)[phi_2_dcx_index]
+            slice_values = [0, 0, phi_1_dc_i, phi_2_dc_i]
+
+            U, X_mesh = simRunner.system.lattice(t, resolution, axes=(0, 1), manual_domain=modified_manual_domain, slice_values = slice_values)
+
+            if (i==0) and not vmin and not vmax:
+                vmin = np.min(U)
+                vmax = np.max(U)
+            # U, X_mesh = simRunner.system.lattice(t, resolution, axes=(axis1, axis2), manual_domain=manual_domain, slice_values = slice_values)
+            X = X_mesh[0]
+            Y = X_mesh[1]
+            x_min, x_max = np.min(X), np.max(X)
+            y_min, y_max = np.min(Y), np.max(Y)
+
+
+            if surface is False:
+                # This part is to prevent index error
+                if len(timeSeries) > numberOfColumns: # when the number of graph is more than one row
+                    contour_subplot = ax[contour_row][column]
+                    cutline_subplot = ax[cutline_row][column]
+                elif len(timeSeries) <= numberOfColumns and len(timeSeries) > 1: # when the number of graph is just one row
+                    contour_subplot = ax[contour_row][column]
+                    cutline_subplot = ax[cutline_row][column]
+
+                if len(subplot_title_array) > 0:
+                    contour_subplot.set_title(f"t = {t:.3g}" + ", ".join(subplot_title_array[i]))
+                else:
+                    contour_subplot.set_title(f"t = {t:.3g}")
+
+                # subplot.set_aspect(1)
+                plotResult = plotCutlines(X, Y, U, cutlineDirection = cutlineDirection, cutlineValue = cutlineValue, contour_plt = contour_subplot, cutline_plt = cutline_subplot, contours = contours, time = t)
+                plotResult["parameters"] = subplot_title_array
+                plotResultArray.append(plotResult)
+                # subplot.show()
+                # plt.scatter(plotAxis, targetU[0])
+                # if cutlineDirection == "v":
+                #     targetAxis = Y
+                #     targetIndex = np.sum(np.mean(targetAxis, axis=1) < cutline) - 1
+                #     plotAxis = X[targetIndex, :]
+                # if cutlineDirection == "h":
+                #     targetAxis = X
+                #     targetIndex = np.sum(np.mean(targetAxis, axis=1) < cutline) - 1
+                #     plotAxis = Y[:, targetIndex]
+                # # print(X[targetIndex, :])
+                # # out1 = subplot.contourf(X, Y, U, contours, vmin = vmin, vmax = vmax)
+                #
+                #
+                # if cutlineDirection == "v":
+                #     subplot.axvline(x=cutline, ymin=np.min(plotAxis), ymax=np.max(plotAxis))
+                # if cutlineDirection == "h":
+                #     subplot.axhline(y=cutline, xmin=np.min(plotAxis), xmax=np.max(plotAxis))
+                #
+                # # targetIndex = np.sum(np.mean(targetAxis, axis=1) < cutline) - 1
+                # # subplot.set_aspect(0)
+                # out2 = subplot.plot(plotAxis, U[targetIndex, :])
+
+                # cfqr.system.protocol.get_params(0)
+
+    drawParameterGraphs(fig, ax, vmin, vmax)
+    plt.show()
+    return plotResultArray
+
+def plotCutlines(X, Y, U, cutlineDirection, cutlineValue, contour_plt = plt, cutline_plt = plt, contours = 5, time = None):
+    if cutlineDirection == "h":
+        _plotAxis = X
+        _targetAxis = Y
+        _plotU = U
+
+    if cutlineDirection == "v":
+        _plotAxis = Y.T
+        _targetAxis = X.T
+        _plotU = U.T
+
+    plotAxis = _plotAxis[0]
+
+    targetAxis = np.mean(_targetAxis, axis = 1)
+    # to find out the resolution of the target axis
+    targetRange = (targetAxis[-1] - targetAxis[-2])/2
+    targetIndex = np.where(np.abs(targetAxis - cutlineValue) <= targetRange)[0][0]
+    targetU = _plotU[targetIndex]
+    # print(targetAxis, targetIndex, targetU)
+    cont = contour_plt.contourf(X, Y, U,  contours)
+
+    if cutlineDirection == "h":
+        contour_plt.hlines(y = _targetAxis[targetIndex], xmin = np.min(_plotAxis), xmax = np.max(_plotAxis), colors= "red")
+    if cutlineDirection == "v":
+        contour_plt.vlines(x = _targetAxis[targetIndex], ymin = np.min(_plotAxis), ymax = np.max(_plotAxis), colors= "red")
+    # _plt.show()
+
+    cutline_plt.scatter(plotAxis, targetU)
+    return {
+        "contour_plot": {"X": X, "Y": Y, "U": U, "contours": contours, "time": time},
+        "cutline_plot": {"plotAxis": plotAxis, "targetU": targetU, "time": time, "cutlineDirection": cutlineDirection, "cutlineValue": cutlineValue}
+    }
+
+
 def eq_state(self, Nsample, t=None, resolution=500, beta=1, manual_domain=None, axes=None, slice_vals=None, verbose=True):
         resolution = 80
         NT = Nsample
@@ -286,3 +433,4 @@ def eq_state(self, Nsample, t=None, resolution=500, beta=1, manual_domain=None, 
 #             return state[:, :, 0]
 
 #         return state
+# cutlineValue, contour_plt = contour_subplot, cutline_plt = cutline_subplot)

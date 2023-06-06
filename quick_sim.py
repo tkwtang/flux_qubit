@@ -23,6 +23,7 @@ def setup_sim(system, init_state, procedures=None, sim_params=None, dt=1/200, da
         if sim_params is None:
             sim_params=[1.,1.,1.]
 
+        print("from quick sim:", sim_params)
         gamma = sim_params[0] * damping
         theta = sim_params[1]
         eta = sim_params[2] * sqrt(damping) * sqrt(temp)

@@ -12,7 +12,7 @@ from SimRunner import SaveParams, SaveSimOutput, SaveFinalWork
 from infoenginessims.simprocedures import basic_simprocedures as sp
 from infoenginessims.simprocedures import running_measurements as rp
 from infoenginessims.simprocedures import trajectory_measurements as tp
-from infoenginessims.simprocedures.basic_simprocedures import ReturnFinalState, MeasureWorkDone
+from infoenginessims.simprocedures.basic_simprocedures import ReturnFinalState, MeasureWorkDone, MeasureStepValue
 from quick_sim import setup_sim
 
 default_params_dict = {}
@@ -99,10 +99,12 @@ class coupledFluxQubitRunner(SimManager):
     #         final_W = U0 + UF
     #         setattr(self.sim.output, 'final_W', final_W)
 
-
     def set_simprocs(self, as_step, sampleSize):
         return [
             sp.ReturnFinalState(),
             sp.MeasureAllState(trial_request=np.s_[:sampleSize], step_request=np.s_[::as_step]),
-            sp.MeasureWorkDone(trial_request=np.s_[:sampleSize], step_request=np.s_[::as_step])
+            # sp.MeasureAllState(),
+            sp.MeasureWorkDone(),
+            sp.MeasureWorkDone2(rp.get_dW),
+            # sp.MeasureWorkDone(trial_request=np.s_[:sampleSize], step_request=np.s_[::as_step])
             ]

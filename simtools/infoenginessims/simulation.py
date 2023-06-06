@@ -220,6 +220,9 @@ class Simulation:
 
         # Do final tasks and get outputs
         outputs = Bunch()
+        self.current_step += 1
+        self.current_time += dt
+
         for procedure in procedures:
 
             output = procedure.do_final_task()

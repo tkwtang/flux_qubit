@@ -57,8 +57,6 @@ def coupled_flux_qubit_pot(phi_1, phi_2, phi_1dc, phi_2dc, params, phi_1_prefact
     - phi_x: associated with asymmetry in the informational subspace, and will only take a nonzero value to help
       offset asymmetry from the delta_beta term in U'
     """
-    # (U0_1, U0_2), (g_1, g_2),  (beta_1, beta_2), (delta_beta_1, delta_beta_2), (phi_1x, phi_2x), (phi_1dcx, phi_2dcx) = params
-
 
     U0_1, U0_2, g_1, g_2,  beta_1, beta_2, delta_beta_1, delta_beta_2, phi_1x, phi_2x , phi_1dcx, phi_2dcx, M_12 = params
 
@@ -71,8 +69,10 @@ def coupled_flux_qubit_pot(phi_1, phi_2, phi_1dc, phi_2dc, params, phi_1_prefact
     u4_1 = delta_beta_1 * np.sin(phi_1) * np.sin(phi_1dc/2)
     u4_2 = delta_beta_2 * np.sin(phi_2) * np.sin(phi_2dc/2)
     u5 = M_12 * (phi_1 - phi_1x) * (phi_2 - phi_2x)
+    U = U0_1 * ( u1_1 + u2_1 + u3_1 + u4_1 ) + U0_2 * ( u1_2 + u2_2 + u3_2 + u4_2 ) + np.sqrt(U0_1 * U0_2) * u5
 
-    U = U0_1 * ( u1_1 + u2_1 + u3_1 + u4_1 ) + U0_2 * ( u1_2 + u2_2 + u3_2 + u4_2 ) + u5
+    # u5 = M_12
+    # U = U0_1 * ( u1_1 + u2_1 + u3_1 + u4_1 ) + U0_2 * ( u1_2 + u2_2 + u3_2 + u4_2 ) + u5
 
     # print("From coupled_fq_potential.py")
     # print("This is phi_1:", phi_1)
@@ -98,31 +98,54 @@ def coupled_flux_qubit_force(phi_1, phi_2, phi_1dc, phi_2dc, params, phi_1_prefa
 
     U0_1, U0_2, g_1, g_2,  beta_1, beta_2, delta_beta_1, delta_beta_2, phi_1x, phi_2x , phi_1dcx, phi_2dcx, M_12 = params
 
+    # U_dp1 = U0_1* (
+    #     (phi_1 - phi_1x) * phi_1_prefactor
+    #     - beta_1 * np.sin(phi_1) * np.cos(phi_1dc / 2)
+    #     + delta_beta_1 * np.cos(phi_1) * np.sin(phi_1dc/2)
+    # )  + np.sqrt(U0_1 * U0_2)
+    #
+    # U_dp2 = U0_2* (
+    #     (phi_2 - phi_2x) * phi_2_prefactor
+    #     - beta_2 * np.sin(phi_2) * np.cos(phi_2dc / 2)
+    #     + delta_beta_2 * np.cos(phi_2) * np.sin(phi_2dc/2)
+    # )  + np.sqrt(U0_1 * U0_2)
+    #
+    # U_dp1dc = U0_1* (
+    #     g_1 * (phi_1dc - phi_1dcx)
+    #     - 1/2 * beta_1 * np.cos(phi_1) * np.sin(phi_1dc / 2)
+    #     + 1/2 * delta_beta_1 * np.sin(phi_1) * np.cos(phi_1dc/2)
+    # )
+    #
+    # U_dp2dc = U0_2* (
+    #     g_2 * (phi_2dc -  phi_2dcx)
+    #     - 1/2 * beta_2 * np.cos(phi_2) * np.sin(phi_2dc / 2)
+    #     + 1/2 * delta_beta_2 * np.sin(phi_2) * np.cos(phi_2dc/2)
+    # )
+
     U_dp1 = U0_1* (
         (phi_1 - phi_1x) * phi_1_prefactor
         - beta_1 * np.sin(phi_1) * np.cos(phi_1dc / 2)
         + delta_beta_1 * np.cos(phi_1) * np.sin(phi_1dc/2)
-    )  + M_12  *  (phi_2 - phi_2x)
+    )  + np.sqrt(U0_1 * U0_2)  * M_12  *  (phi_2 - phi_2x)
 
     U_dp2 = U0_2* (
         (phi_2 - phi_2x) * phi_2_prefactor
         - beta_2 * np.sin(phi_2) * np.cos(phi_2dc / 2)
         + delta_beta_2 * np.cos(phi_2) * np.sin(phi_2dc/2)
-    )  + M_12 *  (phi_1 - phi_1x)
+    )  + np.sqrt(U0_1 * U0_2)  * M_12 *  (phi_1 - phi_1x)
 
     U_dp1dc = U0_1* (
         g_1 * (phi_1dc - phi_1dcx)
         - 1/2 * beta_1 * np.cos(phi_1) * np.sin(phi_1dc / 2)
         + 1/2 * delta_beta_1 * np.sin(phi_1) * np.cos(phi_1dc/2)
     )
+    # print(params)
 
     U_dp2dc = U0_2* (
         g_2 * (phi_2dc -  phi_2dcx)
         - 1/2 * beta_2 * np.cos(phi_2) * np.sin(phi_2dc / 2)
         + 1/2 * delta_beta_2 * np.sin(phi_2) * np.cos(phi_2dc/2)
     )
-
-
 
     return -1 * np.array([U_dp1, U_dp2, U_dp1dc, U_dp2dc])
 
