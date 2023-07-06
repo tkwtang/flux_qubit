@@ -1,4 +1,4 @@
-import copy, datetime
+import copy, datetime, socket
 import numpy as np
 import edward_tools.couple_flux_qubit_metrics as couple_flux_qubit_metrics
 import edward_tools.coupled_fq_protocol_library as coupled_fq_protocol_library
@@ -221,13 +221,14 @@ def getProtocolSubstepName(protocol_list, t):
     print(time_array, cumulative_time_array, name_array[targetIndex])
 
 
-def saveSimulationResult(simResult, timeOrStep = "time", save = False):
+def saveSimulationResult(simResult, U0_1, timeOrStep = "time", save = False):
+    """U0_1"""
     #  fidelity
     fidelity = simResult["fidelity"]
 
     # work_distribution
     work_distribution = simResult["work_distribution"]
-    unmodified_jarzyn = float(np.mean(np.exp(-work_distribution)))
+    unmodified_jarzyn = float(np.mean(np.exp(-work_distribution * U0_1)))
 
     # plt.figure(figsize=(10, 7))
     # plt.text( f"{unmodified_jarzyn: .3g}", horizontalalignment="right",
@@ -243,8 +244,6 @@ def saveSimulationResult(simResult, timeOrStep = "time", save = False):
     # work statistics
     work_statistic = simResult["work_statistic"]
     work_mean, work_std = work_statistic[:, 0], work_statistic[:, 1]
-
-
 
     skip_step = int(len(work_mean) * 0.05)
     step_array = np.arange(0, work_mean.shape[0])
@@ -265,13 +264,20 @@ def saveSimulationResult(simResult, timeOrStep = "time", save = False):
     if save:
         simResult["ani"].save(f'coupled_flux_qubit_protocol/coupled_flux_qubit_data_gallery/{simResult["simulation_id"]}_szilard_engine.mp4', writer = FFwriter)
 
+    simulationData = {
+        "simulation_date":                 str(simResult["simulation_date"]),
+        "simulation_time":                 simResult["simulation_time"],
+        "simulation_id":                     simResult["simulation_id"],
+        "simulation_computer":         socket.gethostname(),
+        "saveTime":                           str(datetime.datetime.timestamp(datetime.datetime.now()))
+    }
+
+
     saveData = {
         "params":                               simResult["params"],
         "initial_parameter_dict":       simResult["initial_parameter_dict"],
         "protocol_list_item":             simResult["protocol_list_item"],
-        "simulation_date":                 str(simResult["simulation_date"]),
-        "simulation_time":                 simResult["simulation_time"],
-        "simulation_id":                     simResult["simulation_id"],
+        "simulation_data":                 simulationData,
         "jarzynski_term":                   unmodified_jarzyn,
         "fidelity":                               simResult["fidelity"],
         "comment":                ""
