@@ -20,3 +20,8 @@
 ./.git/lfs/objects/8a/49/8a49c4f3da61d92a1c6373c05a5940d067c72ccc289502db0b8326f8dc629a41
 ./.git/lfs/objects/46/86/468653e35803be4c2c70f8f29c4d6b9ae67f527b88588effdfde9801b994810f
 ./.git/lfs/objects/24/42/24428a9fa40d5a787a96417a87db1f9c955c47a331ed8986fea60a05c776ac17
+./coupled_flux_qubit_protocol/coupled_flux_qubit_data_gallery/*.png
+./coupled_flux_qubit_protocol/coupled_flux_qubit_data_gallery/*.mp4
+./coupled_flux_qubit_protocol/coupled_flux_qubit_data_gallery/*.npy
+
+
