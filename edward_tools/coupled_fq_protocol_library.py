@@ -9,7 +9,7 @@ from .fq_potential import fq_pot, fq_default_param
 from sus.protocol_designer import System, Protocol, Potential, Compound_Protocol
 import matplotlib.pyplot as plt
 
-protocol_key = ['U0_1', 'U0_2', 'gamma_1', 'gamma_2', 'beta_1', 'beta_2', 'd_beta_1', 'd_beta_2', 'phi_1_x', 'phi_2_x', 'phi_1_dcx', 'phi_2_dcx', 'M_12']
+protocol_key = ['U0_1', 'U0_2', 'gamma_1', 'gamma_2', 'beta_1', 'beta_2', 'd_beta_1', 'd_beta_2', 'phi_1_x', 'phi_2_x', 'phi_1_dcx', 'phi_2_dcx', 'M_12', 'x_c']
 
 def create_simple_protocol_parameter_dict(protocol_array):
     """
@@ -104,14 +104,17 @@ def create_system_from_storage_and_computation_protocol(storage_protocol_paramet
 
 def customizedProtocol(initial_values_dict, protocol_list, normalized = False):
     protocol_key_array = ['U0_1', 'U0_2', 'gamma_1', 'gamma_2', 'beta_1', 'beta_2', 'd_beta_1', \
-                    'd_beta_2', 'phi_1_x', 'phi_2_x', 'phi_1_dcx', 'phi_2_dcx', 'M_12']
+                    'd_beta_2', 'phi_1_x', 'phi_2_x', 'phi_1_dcx', 'phi_2_dcx', 'M_12', 'x_c']
 
     protocol_parameter_dict = {key: [value] for key, value in initial_values_dict.items()}
-    protocol_parameter_dict["t"] = [0]
+    protocol_parameter_dict["t"] = [0.0]
 
 
     for item in protocol_list:
         # add the duration to the time entry of the protocol_parameter_dict
+        # print("*" * 20)
+        # print(protocol_list)
+        # print("*" * 20)
         protocol_parameter_dict["t"].append(protocol_parameter_dict["t"][-1] + item["duration"])
 
         for key in protocol_key_array:

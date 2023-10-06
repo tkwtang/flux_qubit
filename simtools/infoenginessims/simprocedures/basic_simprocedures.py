@@ -342,10 +342,14 @@ class MeasureWorkDone2(SimProcedure):
     def do_initial_task(self, simulation):
         self.simulation = simulation
         # ntrial =  simResult["cfqr"].sim.initial_state.shape[0]
+        self.simulation.work_statistic_array = empty([simulation.nsteps, 2])
         self.simulation.work_dist_array_2 = zeros(simulation.ntrials)
 
     def do_intermediate_task(self):
         dW = self.get_val(self.simulation)
+        # print(dW)
         self.simulation.work_dist_array_2 += dW
+        current_step = self.simulation.current_step
+        self.simulation.work_statistic_array[current_step, :] = [np.mean(self.simulation.work_dist_array_2), np.std(self.simulation.work_dist_array_2)]
 
         # simulation.work_statistic_array[current_step] =

@@ -8,6 +8,8 @@ from sus.protocol_designer import System, Protocol, Potential, Compound_Protocol
 
 # phi_1_prefactor = 1
 # phi_2_prefactor = 1
+PHI_0 = 2.067833848 * 1e-15
+x_c0 = PHI_0 / (2 * np.pi)
 
 def coupled_flux_qubit_pot(phi_1, phi_2, phi_1dc, phi_2dc, params, phi_1_prefactor = 1, phi_2_prefactor = 1):
     """
@@ -22,15 +24,26 @@ def coupled_flux_qubit_pot(phi_1, phi_2, phi_1dc, phi_2dc, params, phi_1_prefact
     - [U_0, g, beta, delta_beta, phi_x, phi_xdc ]: correspond to the energy scale, gamma
     - phi_x: associated with asymmetry in the informational subspace, and will only take a nonzero value to help
       offset asymmetry from the delta_beta term in U'
+     - scale factor is x_c used in the simulation
     """
 
-    U0_1, U0_2, g_1, g_2,  beta_1, beta_2, delta_beta_1, delta_beta_2, phi_1x, phi_2x , phi_1dcx, phi_2dcx, M_12 = params
+    U0_1, U0_2, g_1, g_2,  beta_1, beta_2, delta_beta_1, delta_beta_2, phi_1x, phi_2x , phi_1dcx, phi_2dcx, M_12, x_c = params
 
     U0_2 = U0_2 / U0_1
     U0_1 = 1
 
-    u1_1 = 1/2 * (phi_1 - phi_1x)**2 * phi_1_prefactor
-    u1_2 = 1/2 * (phi_2 - phi_2x)**2 * phi_2_prefactor
+    scale_factor = x_c / x_c0
+    phi_1 = phi_1 * scale_factor
+    phi_2 = phi_2 * scale_factor
+    phi_1dc = phi_1dc * scale_factor
+    phi_2dc = phi_2dc  * scale_factor
+    phi_1x = phi_1x * scale_factor
+    phi_2x = phi_2x * scale_factor
+    phi_1dcx = phi_1dcx * scale_factor
+    phi_2dcx = phi_2dcx * scale_factor
+
+    u1_1 = 1/2 * (phi_1 - phi_1x)**2
+    u1_2 = 1/2 * (phi_2 - phi_2x)**2
     u2_1 = 1/2 * g_1 * (phi_1dc - phi_1dcx)**2
     u2_2 = 1/2 * g_2 * (phi_2dc - phi_2dcx)**2
     u3_1 = beta_1 * np.cos(phi_1) * np.cos(phi_1dc/2)
@@ -65,10 +78,21 @@ def coupled_flux_qubit_force(phi_1, phi_2, phi_1dc, phi_2dc, params, phi_1_prefa
     - [U_0, g, beta, delta_beta, phi_x, phi_xdc ]: correspond to the energy scale, gamma
     """
 
-    U0_1, U0_2, g_1, g_2,  beta_1, beta_2, delta_beta_1, delta_beta_2, phi_1x, phi_2x , phi_1dcx, phi_2dcx, M_12 = params
+    U0_1, U0_2, g_1, g_2,  beta_1, beta_2, delta_beta_1, delta_beta_2, phi_1x, phi_2x , phi_1dcx, phi_2dcx, M_12, x_c = params
 
     U0_2 = U0_2 / U0_1
     U0_1 = 1
+
+
+    scale_factor = x_c / x_c0
+    phi_1 = phi_1 * scale_factor
+    phi_2 = phi_2 * scale_factor
+    phi_1dc = phi_1dc * scale_factor
+    phi_2dc = phi_2dc  * scale_factor
+    phi_1x = phi_1x * scale_factor
+    phi_2x = phi_2x * scale_factor
+    phi_1dcx = phi_1dcx * scale_factor
+    phi_2dcx = phi_2dcx * scale_factor
 
     U_dp1 = U0_1* (
         (phi_1 - phi_1x) * phi_1_prefactor
@@ -98,10 +122,12 @@ def coupled_flux_qubit_force(phi_1, phi_2, phi_1dc, phi_2dc, params, phi_1_prefa
     return -1 * np.array([U_dp1, U_dp2, U_dp1dc, U_dp2dc])
 
 [phi_1_bound, phi_2_bound, phi_1dc_bound, phi_2dc_bound] = [4, 4, 4, 4]
+
+
 # [U_0, g, beta, delta_beta, phi_x, phi_xdc ]
 # fq_default_param = [1, 1, beta, d_beta, 0, 0]
-coupled_fq_default_param = [(1, 1), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0)]
-coupled_fq_default_param = np.append(np.array(coupled_fq_default_param).reshape(1, -1), 0)
+coupled_fq_default_param = [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, x_c0]
+# coupled_fq_default_param = np.append(np.array(coupled_fq_default_param).reshape(1, -1), 0)
 
 coupled_fq_domain = [[-phi_1_bound, -phi_2_bound, -phi_1dc_bound, -phi_2dc_bound], [phi_1_bound, phi_2_bound, phi_1dc_bound, phi_2dc_bound]]
-coupled_fq_pot = Potential(coupled_flux_qubit_pot, coupled_flux_qubit_force, 13, 4, default_params = coupled_fq_default_param,  relevant_domain = coupled_fq_domain)
+coupled_fq_pot = Potential(coupled_flux_qubit_pot, coupled_flux_qubit_force, 14, 4, default_params = coupled_fq_default_param,  relevant_domain = coupled_fq_domain)

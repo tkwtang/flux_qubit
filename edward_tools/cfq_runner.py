@@ -4,6 +4,7 @@ source_path = os.path.expanduser('~/Project/source/')
 sys.path.append(source_path)
 sys.path.append(os.path.expanduser('~/Project/source/simtools/'))
 
+
 import numpy as np
 from .coupled_fq_potential import coupled_fq_pot, coupled_fq_default_param
 from sus.protocol_designer import System, Protocol, Potential, Compound_Protocol
@@ -18,12 +19,12 @@ from quick_sim import setup_sim
 default_params_dict = {}
 
 class coupledFluxQubitRunner(SimManager):
-    def __init__(self, potetial = coupled_fq_pot, name_func = [None, None], params = default_params_dict, potential_default_param = coupled_fq_default_param, storage_protocol = None, computation_protocol = None ):
+    def __init__(self, potential = coupled_fq_pot, name_func = [None, None], params = default_params_dict, potential_default_param = coupled_fq_default_param, storage_protocol = None, computation_protocol = None ):
         """
         params: parameters for the simulation such as time, lambda, theta and eta
         override_potential_parameter: to override the default parameter for the potential
         """
-        self.potential = potetial
+        self.potential = potential
         self.params = params
         self.save_name = name_func
         self.has_velocity = True
@@ -103,8 +104,5 @@ class coupledFluxQubitRunner(SimManager):
         return [
             sp.ReturnFinalState(),
             sp.MeasureAllState(trial_request=np.s_[:sampleSize], step_request=np.s_[::as_step]),
-            # sp.MeasureAllState(),
-            sp.MeasureWorkDone(),
-            sp.MeasureWorkDone2(rp.get_dW),
-            # sp.MeasureWorkDone(trial_request=np.s_[:sampleSize], step_request=np.s_[::as_step])
+            sp.MeasureWorkDone2(rp.get_dW)
             ]

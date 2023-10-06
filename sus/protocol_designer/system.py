@@ -118,6 +118,13 @@ class System:
 
         Parameters
         ----------
+        e.g. for cfqr, the following is one of the input. It contains phi_1, phi_2, phi_1_dc and phi_2_dc
+        array([[
+            [ 2.00471438e+00, -1.55944943e+00],
+            [-2.53475623e+00, -1.34610852e+00],
+            [ 1.87382091e-01,  7.36983597e-01],
+            [-1.41400510e-01,  4.09440420e-01]],
+        ], ...)
 
         coords: ndarray of dimensions [N_c, N_d, 2]
             array of N_c sets of coordinates in N_d dimensions
@@ -686,7 +693,12 @@ class System:
                     axes = [_ for _ in range(0, self.potential.N_dim)]
 
                 axes = np.array(axes)
-                lims = lims[:, axes]
+
+                try:
+                    lims = lims[:, axes]
+                except:
+                    axes = np.array(axes-1)
+                    lims = lims[:, axes]
 
             else:
                 assert axes is not None, "when using a manual domain, must include the 'axes' keyword argument"
